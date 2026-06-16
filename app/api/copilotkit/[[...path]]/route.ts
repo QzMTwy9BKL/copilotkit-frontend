@@ -7,7 +7,6 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 
 const OPENAI_BASE_URL = process.env.NEXT_PUBLIC_OPENAI_BASE_URL || "http://8.219.101.225:8000/v1";
-const BACKEND_BASE_URL = OPENAI_BASE_URL.replace(/\/v1\/?$/, "");
 
 // Force stream: false on all requests because the backend
 // /v1/chat/completions returns empty content in streaming mode.
@@ -33,6 +32,11 @@ const serviceAdapter = new OpenAIAdapter({
   model: "deepseek-v4-flash",
 });
 
+// Base URL for the universal backend proxy (same-origin, server-to-server)
+const PROXY_ORIGIN = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";
+
 const runtime = new CopilotRuntime({
   actions: [
     {
@@ -43,7 +47,7 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ query }: { query: string }) => {
         try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/knowledge/query`, {
+          const res = await fetch(`${PROXY_ORIGIN}/api/backend/api/knowledge/query`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query, mode: "hybrid" }),
@@ -63,7 +67,7 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ goal }: { goal: string }) => {
         try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/agent/run`, {
+          const res = await fetch(`${PROXY_ORIGIN}/api/backend/api/agent/run`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ goal, max_retries: 2 }),
