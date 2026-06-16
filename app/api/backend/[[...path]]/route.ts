@@ -7,35 +7,37 @@ const BACKEND_URL =
   );
 
 async function proxy(req: NextRequest, method: string) {
-  const path = req.nextUrl.pathname.replace(/^\/api\/backend/, "");
-  const url = `${BACKEND_URL}${path}${req.nextUrl.search}`;
+  try {
+    const path = req.nextUrl.pathname.replace(/^\/api\/backend/, "");
+    const url = `${BACKEND_URL}${path}${req.nextUrl.search}`;
 
-  const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    if (!["host", "connection", "content-length"].includes(key.toLowerCase())) {
-      headers[key] = value;
-    }
-  });
+    const headers: Record<string, string> = {};
+    const contentType = req.headers.get("content-type") || "application/json";
+    headers["Content-Type"] = contentType;
 
-  const body =
-    method !== "GET" && method !== "HEAD" ? await req.text() : undefined;
+    const body =
+      method !== "GET" && method !== "HEAD" ? await req.text() : undefined;
 
-  const backendRes = await fetch(url, {
-    method,
-    headers: {
-      ...headers,
-      "Content-Type": req.headers.get("content-type") || "application/json",
-    },
-    body: body || undefined,
-  });
+    const backendRes = await fetch(url, {
+      method,
+      headers,
+      body: body || undefined,
+    });
 
-  const resBody = await backendRes.text();
-  const contentType = backendRes.headers.get("content-type") || "application/json";
+    const resBody = await backendRes.text();
+    const resContentType = backendRes.headers.get("content-type") || "application/json";
 
-  return new NextResponse(resBody, {
-    status: backendRes.status,
-    headers: { "Content-Type": contentType },
-  });
+    return new NextResponse(resBody, {
+      status: backendRes.status,
+      headers: { "Content-Type": resContentType },
+    });
+  } catch (e: any) {
+    console.error("[proxy] error:", e.message || e);
+    return new NextResponse(JSON.stringify({ error: "proxy failed", detail: e.message || "unknown" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 export async function GET(req: NextRequest) {
