@@ -6,8 +6,11 @@ import {
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 
+const OPENAI_BASE_URL = process.env.NEXT_PUBLIC_OPENAI_BASE_URL || "http://8.219.101.225:8000/v1";
+const BACKEND_BASE_URL = OPENAI_BASE_URL.replace(/\/v1\/?$/, "");
+
 const openai = new OpenAI({
-  baseURL: "http://8.219.101.225:8000/v1",
+  baseURL: OPENAI_BASE_URL,
   apiKey: "not-needed",
 });
 
@@ -26,7 +29,7 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ query }: { query: string }) => {
         try {
-          const res = await fetch("http://8.219.101.225:8000/api/knowledge/query", {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/knowledge/query`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query, mode: "hybrid" }),
@@ -46,7 +49,7 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ goal }: { goal: string }) => {
         try {
-          const res = await fetch("http://8.219.101.225:8000/api/agent/run", {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/agent/run`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ goal, max_retries: 2 }),

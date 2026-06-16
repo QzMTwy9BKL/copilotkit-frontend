@@ -147,7 +147,7 @@ export default function Home() {
         {/* Status Bar */}
         <div className="mt-8 bg-zinc-900/30 border border-zinc-800/50 rounded-xl px-5 py-3">
           <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>Server: 8.219.101.225:8000 | Memory: ~840Mi/3.4Gi</span>
+            <span>Server: {process.env.NEXT_PUBLIC_OPENAI_BASE_URL || "8.219.101.225:8000"} | Memory: ~840Mi/3.4Gi</span>
             <span className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
