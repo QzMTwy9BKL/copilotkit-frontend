@@ -24,7 +24,7 @@ function QuickActionCard({ icon, label, description, onClick }: {
 }
 
 export default function Home() {
-  const { appendMessage, isLoading } = useCopilotChat();
+  const { appendMessage } = useCopilotChat();
   const [agentStatus, setAgentStatus] = useState<"idle" | "running">("idle");
 
   const sendMsg = (msg: string) => {
@@ -139,7 +139,7 @@ export default function Home() {
           <h2 className="text-sm font-medium text-zinc-400 mb-4">Quick Actions — Click any card to start</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {quickActions.map((qa, i) => (
-              <QuickActionCard key={i} {...qa} />
+              <QuickActionCard key={i} icon={qa.icon} label={qa.label} description={qa.description} onClick={qa.action} />
             ))}
           </div>
         </div>
