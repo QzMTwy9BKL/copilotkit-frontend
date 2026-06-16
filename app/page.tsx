@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { TextMessage, MessageRole } from "@copilotkit/runtime-client-gql";
@@ -26,15 +26,21 @@ function QuickActionCard({ icon, label, description, onClick }: {
 export default function Home() {
   const { appendMessage } = useCopilotChat();
   const [agentStatus, setAgentStatus] = useState<"idle" | "running">("idle");
+  const [chatOpen, setChatOpen] = useState(false);
 
-  const sendMsg = (msg: string) => {
-    appendMessage(
-      new TextMessage({
-        content: msg,
-        role: MessageRole.User,
-      })
-    );
-  };
+  const sendMsg = useCallback((msg: string) => {
+    setChatOpen(true);
+    try {
+      appendMessage(
+        new TextMessage({
+          content: msg,
+          role: MessageRole.User,
+        })
+      );
+    } catch (e) {
+      console.error("[sendMsg] appendMessage failed:", e);
+    }
+  }, [appendMessage]);
 
   const quickActions = [
     {
