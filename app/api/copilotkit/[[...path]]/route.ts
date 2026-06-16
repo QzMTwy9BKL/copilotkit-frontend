@@ -9,10 +9,24 @@ import OpenAI from "openai";
 const OPENAI_BASE_URL = process.env.NEXT_PUBLIC_OPENAI_BASE_URL || "http://8.219.101.225:8000/v1";
 const BACKEND_BASE_URL = OPENAI_BASE_URL.replace(/\/v1\/?$/, "");
 
+// Force stream: false on all requests because the backend
+// /v1/chat/completions returns empty content in streaming mode.
 const openai = new OpenAI({
   baseURL: OPENAI_BASE_URL,
   apiKey: "not-needed",
-});
+  fetch: async (url: any, init: any) => {
+    if (init?.body && typeof init.body === "string") {
+      try {
+        const body = JSON.parse(init.body);
+        if (body.stream !== false) {
+          body.stream = false;
+          init = { ...init, body: JSON.stringify(body) };
+        }
+      } catch { /* ignore parse errors */ }
+    }
+    return fetch(url, init);
+  },
+} as any);
 
 const serviceAdapter = new OpenAIAdapter({
   openai,
