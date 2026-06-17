@@ -18,8 +18,10 @@ const serviceAdapter = new OpenAIAdapter({
 
 const runtime = new CopilotRuntime();
 
-export const POST = copilotRuntimeNextJSAppRouterEndpoint({
+const endpoint = copilotRuntimeNextJSAppRouterEndpoint({
   runtime,
   serviceAdapter,
   endpoint: "/api/copilotkit",
 });
+
+export const POST = (req: NextRequest) => endpoint.handleRequest(req);
