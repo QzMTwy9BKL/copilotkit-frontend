@@ -68,7 +68,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <CopilotKit runtimeUrl="/api/copilotkit">
+    <CopilotKit runtimeUrl="/api/copilotkit?token=aios_internal_2024">
       {children}
     </CopilotKit>
   );

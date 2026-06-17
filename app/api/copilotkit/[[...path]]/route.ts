@@ -3,10 +3,16 @@
   OpenAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const BACKEND_BASE_URL = "http://8.219.101.225:8000";
+const INTERNAL_TOKEN = "aios_internal_2024";
+
+function checkAuth(req: NextRequest): boolean {
+  const token = req.nextUrl.searchParams.get("token");
+  return token === INTERNAL_TOKEN;
+}
 
 const openai = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY || "not-needed",
@@ -74,21 +80,26 @@ const endpoint = copilotRuntimeNextJSAppRouterEndpoint({
 });
 
 export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   return endpoint.handleRequest(req);
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   return endpoint.handleRequest(req);
 }
 
 export async function PUT(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   return endpoint.handleRequest(req);
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   return endpoint.handleRequest(req);
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   return endpoint.handleRequest(req);
 }
