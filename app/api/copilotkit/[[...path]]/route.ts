@@ -11,6 +11,10 @@ const openai = new OpenAI({
   baseURL: "http://8.219.101.225:8000/v1",
 });
 
+// Force @ai-sdk/openai to use /v1/chat/completions (strict mode)
+// instead of trying /v1/responses which returns empty content from DeepSeek
+(openai as any)._options = { compatibility: "strict" };
+
 const serviceAdapter = new OpenAIAdapter({
   openai,
   model: "deepseek-v4-flash",
