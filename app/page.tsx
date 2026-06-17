@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { TextMessage, MessageRole } from "@copilotkit/runtime-client-gql";
@@ -27,20 +27,34 @@ export default function Home() {
   const { appendMessage } = useCopilotChat();
   const [agentStatus, setAgentStatus] = useState<"idle" | "running">("idle");
   const [chatOpen, setChatOpen] = useState(false);
+  const [pendingMsg, setPendingMsg] = useState<string | null>(null);
 
   const sendMsg = useCallback((msg: string) => {
-    setChatOpen(true);
-    try {
-      appendMessage(
-        new TextMessage({
-          content: msg,
-          role: MessageRole.User,
-        })
-      );
-    } catch (e) {
-      console.error("[sendMsg] appendMessage failed:", e);
+    if (!chatOpen) {
+      setPendingMsg(msg);
+      setChatOpen(true);
+    } else {
+      try {
+        appendMessage(new TextMessage({ content: msg, role: MessageRole.User }));
+      } catch (e) {
+        console.error("[sendMsg] appendMessage failed:", e);
+      }
     }
-  }, [appendMessage]);
+  }, [chatOpen, appendMessage]);
+
+  useEffect(() => {
+    if (chatOpen && pendingMsg) {
+      const timer = setTimeout(() => {
+        try {
+          appendMessage(new TextMessage({ content: pendingMsg, role: MessageRole.User }));
+        } catch (e) {
+          console.error("[useEffect] appendMessage failed:", e);
+        }
+        setPendingMsg(null);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [chatOpen, pendingMsg, appendMessage]);
 
   const quickActions = [
     {
@@ -168,15 +182,25 @@ export default function Home() {
         </div>
       </div>
 
-      {/* CopilotKit Popup (floating chat button, bottom-right) */}
-      <CopilotPopup key={chatOpen ? "open" : "closed"} defaultOpen={chatOpen} onSetOpen={setChatOpen}
-        labels={{
-          title: "AI Company OS",
-          initial: "👋 Hi! I'm your AI assistant. I can help you with:\n\n- 💬 General chat\n- 🔍 Knowledge base search\n- 🤖 Agent task execution\n\nTry clicking a card on the left, or type a message below!",
-        }}
-        instructions="You are an AI assistant for AI Company OS. You have access to: 1) query_knowledge - search the knowledge base, 2) run_agent - execute complex tasks with the AI agent team. Use these tools when appropriate. Respond in Chinese by default."
-      />
+      {/* CopilotKit Popup — conditionally mounted, not key trick */}
+      {chatOpen ? (
+        <CopilotPopup
+          defaultOpen={true}
+          onSetOpen={(open) => { if (!open) setChatOpen(false); }}
+          labels={{
+            title: "AI Company OS",
+            initial: "👋 Hi! I'm your AI assistant. I can help you with:\n\n- 💬 General chat\n- 🔍 Knowledge base search\n- 🤖 Agent task execution\n\nTry clicking a card on the left, or type a message below!",
+          }}
+          instructions="You are an AI assistant for AI Company OS. You have access to: 1) query_knowledge - search the knowledge base, 2) run_agent - execute complex tasks with the AI agent team. Use these tools when appropriate. Respond in Chinese by default."
+        />
+      ) : (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-50 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-full px-5 py-3 text-sm font-medium shadow-lg border border-zinc-700 transition-all"
+        >
+          Open Chat
+        </button>
+      )}
     </main>
   );
 }
-
