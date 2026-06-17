@@ -1,4 +1,4 @@
-import {
+﻿import {
   CopilotRuntime,
   OpenAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
@@ -6,32 +6,14 @@ import {
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 
-const OPENAI_BASE_URL = process.env.NEXT_PUBLIC_OPENAI_BASE_URL || "http://8.219.101.225:8000/v1";
-const BACKEND_BASE_URL = OPENAI_BASE_URL.replace(/\/v1\/?$/, "");
+const BACKEND_BASE_URL = "http://8.219.101.225:8000";
 
-// Force stream: false on all requests because the backend
-// /v1/chat/completions returns empty content in streaming mode.
 const openai = new OpenAI({
-  baseURL: OPENAI_BASE_URL,
-  apiKey: "not-needed",
-  fetch: async (url: any, init: any) => {
-    if (init?.body && typeof init.body === "string") {
-      try {
-        const body = JSON.parse(init.body);
-        if (body.stream !== false) {
-          body.stream = false;
-          init = { ...init, body: JSON.stringify(body) };
-        }
-      } catch { /* ignore parse errors */ }
-    }
-    return fetch(url, init);
-  },
-} as any);
-
-const serviceAdapter = new OpenAIAdapter({
-  openai,
-  model: "deepseek-v4-flash",
+  apiKey: process.env.DEEPSEEK_API_KEY || "not-needed",
+  baseURL: `${BACKEND_BASE_URL}/v1`,
 });
+
+const adapter = new OpenAIAdapter({ openai, model: "deepseek-v4-flash" });
 
 const runtime = new CopilotRuntime({
   actions: [
@@ -43,7 +25,6 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ query }: { query: string }) => {
         try {
-          // Server-side fetch, no Mixed Content issue
           const res = await fetch(`${BACKEND_BASE_URL}/api/knowledge/query`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -64,7 +45,6 @@ const runtime = new CopilotRuntime({
       ],
       handler: async ({ goal }: { goal: string }) => {
         try {
-          // Server-side fetch, no Mixed Content issue
           const res = await fetch(`${BACKEND_BASE_URL}/api/agent/run`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -89,11 +69,10 @@ const runtime = new CopilotRuntime({
 
 const endpoint = copilotRuntimeNextJSAppRouterEndpoint({
   runtime,
-  serviceAdapter,
+  serviceAdapter: adapter,
   endpoint: "/api/copilotkit",
 });
 
-// Handle all HTTP methods for all subpaths (threads, runs, etc.)
 export async function GET(req: NextRequest) {
   return endpoint.handleRequest(req);
 }
