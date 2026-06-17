@@ -1,46 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = "http://8.219.101.225:8000";
+const BACKEND_URL = "http://8.219.101.225:8000/v1/chat/completions";
 
 export async function POST(req: NextRequest) {
-  let body = null;
-  try { body = await req.json(); } catch { body = "(not JSON)"; }
+  const body = await req.json();
 
-  let backendOk = false;
-  let backendResponse = "";
   try {
-    const res = await fetch(BACKEND_URL + "/v1/chat/completions", {
+    const backendRes = await fetch(BACKEND_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "deepseek-v4-flash",
-        messages: [{ role: "user", content: "hello" }],
-        stream: false,
-        max_tokens: 10,
-      }),
-      signal: AbortSignal.timeout(8000),
+      body: JSON.stringify(body),
     });
-    backendOk = res.ok;
-    backendResponse = await res.text();
+
+    if (!backendRes.ok) {
+      const err = await backendRes.text();
+      return NextResponse.json({ error: err }, { status: backendRes.status });
+    }
+
+    // Check if streaming response
+    const contentType = backendRes.headers.get("content-type") || "";
+    if (contentType.includes("text/event-stream")) {
+      return new Response(backendRes.body, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming response
+    const data = await backendRes.json();
+    return NextResponse.json(data);
   } catch (e: any) {
-    backendResponse = "ERROR: " + (e.message || String(e));
+    return NextResponse.json(
+      { error: e.message || "Backend unreachable" },
+      { status: 502 }
+    );
   }
-
-  const diag = {
-    message: "CopilotKit diagnostic route",
-    received_body: body,
-    received_body_keys: body && typeof body === "object" ? Object.keys(body) : null,
-    backend: {
-      url: BACKEND_URL + "/v1/chat/completions",
-      ok: backendOk,
-      response: backendResponse.substring(0, 2000),
-    },
-  };
-
-  console.log("[DIAG]", JSON.stringify(diag));
-  return NextResponse.json(diag);
 }
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", backend: BACKEND_URL });
+  return NextResponse.json({ status: "ok" });
 }
