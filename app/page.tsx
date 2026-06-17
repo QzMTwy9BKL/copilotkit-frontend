@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
@@ -169,7 +169,7 @@ export default function Home() {
       </div>
 
       {/* CopilotKit Popup (floating chat button, bottom-right) */}
-      <CopilotPopup
+      <CopilotPopup key={chatOpen ? "open" : "closed"} defaultOpen={chatOpen} onSetOpen={setChatOpen}
         labels={{
           title: "AI Company OS",
           initial: "👋 Hi! I'm your AI assistant. I can help you with:\n\n- 💬 General chat\n- 🔍 Knowledge base search\n- 🤖 Agent task execution\n\nTry clicking a card on the left, or type a message below!",
@@ -179,3 +179,4 @@ export default function Home() {
     </main>
   );
 }
+
