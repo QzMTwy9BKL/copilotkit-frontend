@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/copilotkit/**/*": {
+      "maxDuration": 30
+    }
+  }
+}
